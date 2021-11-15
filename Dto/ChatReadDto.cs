@@ -1,4 +1,4 @@
-﻿using PloomesCsharpChallenge.Data;
+﻿using PloomesCsharpChallenge.Models;
 
 namespace PloomesCsharpChallenge.Dto
 {
