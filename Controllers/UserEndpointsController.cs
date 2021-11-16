@@ -1,4 +1,7 @@
-﻿using AutoMapper;
+﻿using System.Security.Cryptography;
+using System.Text;
+
+using AutoMapper;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,7 +54,25 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       var user = _mapper.Map<User>(userData);
+      user.AuthToken = GenRandomToken();
       return Ok(_mapper.Map<UserMeDto>(_repository.Register(user)));
+    }
+
+    internal string GenRandomToken()
+    {
+      using SHA256 hashCreator = SHA256.Create();
+      using RandomNumberGenerator rngCsp = RandomNumberGenerator.Create();
+
+      byte[] randomBytes = new byte[64];
+      rngCsp.GetBytes(randomBytes);
+      var hashValue = hashCreator.ComputeHash(randomBytes);
+      StringBuilder hexHashValue = new (hashValue.Length * 2);
+      foreach (byte b in hashValue)
+      {
+        hexHashValue.Append($"{b:x2}");
+      }
+
+      return hexHashValue.ToString();
     }
   }
 }
