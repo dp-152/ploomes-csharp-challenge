@@ -55,10 +55,11 @@ namespace PloomesCsharpChallenge.Controllers
 
       var user = _mapper.Map<User>(userData);
       user.AuthToken = GenRandomToken();
+      var returnedUser = _repository.Register(user);
       return CreatedAtRoute(
         nameof(GetById),
-        new { user.Id },
-        _mapper.Map<UserMeDto>(_repository.Register(user)));
+        new { returnedUser.Id },
+        _mapper.Map<UserMeDto>(user));
     }
 
     internal string GenRandomToken()
