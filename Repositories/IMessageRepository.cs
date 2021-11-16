@@ -6,6 +6,7 @@ namespace PloomesCsharpChallenge.Repositories
   {
     bool SaveChanges();
     Message? GetById(int id);
+    IEnumerable<Message> GetAllByChatId(int chatId);
     Message Create(Message msgData);
     void Update(Message msgData);
     void Delete(Message msgData);

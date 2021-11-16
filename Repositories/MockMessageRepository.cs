@@ -39,6 +39,11 @@ namespace PloomesCsharpChallenge.Repositories
       _messages.Remove(msgData);
     }
 
+    public IEnumerable<Message> GetAllByChatId(int chatId)
+    {
+      return _messages.Where(el => el.ChatId == chatId);
+    }
+
     public Message? GetById(int id)
     {
       return _messages.FirstOrDefault(el => el.Id == id);
