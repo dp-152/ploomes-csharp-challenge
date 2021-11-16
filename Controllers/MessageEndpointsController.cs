@@ -46,7 +46,7 @@ namespace PloomesCsharpChallenge.Controllers
       var isMember = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chatId, UserId = user.Id });
       if (isMember is null)
       {
-        return Unauthorized(new { message = "User is not a member of this chat" });
+        return Unauthorized(new { error = "User is not a member of this chat" });
       }
 
       var message = _mapper.Map<Message>(msgData);
@@ -82,7 +82,7 @@ namespace PloomesCsharpChallenge.Controllers
       var chat = _chatRepository.GetById(message.ChatId);
       if (chat is null)
       {
-        return NotFound(new { message = "Chat not found" });
+        return NotFound(new { error = "Chat not found" });
       }
 
       var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
@@ -101,19 +101,19 @@ namespace PloomesCsharpChallenge.Controllers
       ValidateToken(out User? user);
       if (user is null)
       {
-        return Unauthorized(new { message = "Must provide a valid user token to read messages" });
+        return Unauthorized(new { error = "Must provide a valid user token to read messages" });
       }
 
       var chat = _chatRepository.GetById(chatId);
       if (chat is null)
       {
-        return NotFound(new { message = "Chat not found" });
+        return NotFound(new { error = "Chat not found" });
       }
 
       var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
       if (membership is null)
       {
-        return Unauthorized(new { message = "User is not a member of this chat" });
+        return Unauthorized(new { error = "User is not a member of this chat" });
       }
 
       var messages = _messageRepository.GetAllByChatId(chatId);
@@ -134,25 +134,25 @@ namespace PloomesCsharpChallenge.Controllers
       ValidateToken(out User? user);
       if (user is null)
       {
-        return Unauthorized(new { message = "Must provide a valid user token to delete messages" });
+        return Unauthorized(new { error = "Must provide a valid user token to delete messages" });
       }
 
       var message = _messageRepository.GetById(id);
       if (message is null)
       {
-        return NotFound(new { message = "Message not found" });
+        return NotFound(new { error = "Message not found" });
       }
 
       var chat = _chatRepository.GetById(message.ChatId);
       if (chat is null)
       {
-        return NotFound(new { message = "Chat not found" });
+        return NotFound(new { error = "Chat not found" });
       }
 
       var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
       if (membership is null)
       {
-        return Unauthorized(new { message = "User is not a member of this chat" });
+        return Unauthorized(new { error = "User is not a member of this chat" });
       }
 
       _messageRepository.Delete(message);
