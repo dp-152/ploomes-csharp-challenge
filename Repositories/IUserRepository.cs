@@ -8,5 +8,6 @@ namespace PloomesCsharpChallenge.Repositories
     User? Register(User userData);
     User? GetByName(string username);
     User? GetById(int id);
+    User? GetByToken(string token);
   }
 }

@@ -24,6 +24,11 @@ namespace PloomesCsharpChallenge.Repositories
       return _users.FirstOrDefault(el => el.Username == username);
     }
 
+    public User? GetByToken(string token)
+    {
+      return _users.FirstOrDefault(el => el.AuthToken == token);
+    }
+
     public User Register(User userData)
     {
       _users.Add(userData);
