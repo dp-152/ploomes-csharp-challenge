@@ -590,6 +590,7 @@ dotnet_diagnostic.MVC1002.severity=error
 dotnet_diagnostic.MVC1001.severity=error
 dotnet_diagnostic.MVC1003.severity=error
 dotnet_diagnostic.EF1001.severity=error
+dotnet_diagnostic.CS8618.severity=silent
 # dotnet_diagnostic.CS8019.severity=error
 
 [*.{cs,vb}]
