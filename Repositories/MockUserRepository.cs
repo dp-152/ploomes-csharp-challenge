@@ -4,7 +4,7 @@ namespace PloomesCsharpChallenge.Repositories
 {
   public class MockUserRepository : IUserRepository
   {
-    private readonly IQueryable<User> _users = new List<User>
+    private readonly List<User> _users = new ()
     {
       new User { Id = 0, FirstName = "John", LastName = "Smith", Username = "johnsmith1247" },
       new User { Id = 1, FirstName = "Jane", LastName = "Doe", Username = "MrsJaneDoe" },
@@ -12,7 +12,7 @@ namespace PloomesCsharpChallenge.Repositories
       new User { Id = 3, FirstName = "Guy", LastName = "Tang", Username = "kneve1970" },
       new User { Id = 4, FirstName = "Melissa", LastName = "Blevins", Username = "glactionD" },
       new User { Id = 5, FirstName = "Charles", LastName = "Brandenburg", Username = "nessittere" },
-    }.AsQueryable();
+    };
 
     public User? GetById(int id)
     {
@@ -26,7 +26,7 @@ namespace PloomesCsharpChallenge.Repositories
 
     public User Register(User userData)
     {
-      _users.Append(userData);
+      _users.Add(userData);
       return userData;
     }
 
