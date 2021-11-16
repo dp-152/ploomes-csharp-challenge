@@ -45,10 +45,10 @@ namespace PloomesCsharpChallenge.Repositories
       return chatData;
     }
 
-    public void Delete(int chatId)
+    public void Delete(Chat chatData)
     {
-      _chats.RemoveAll(el => el.Id == chatId);
-      _chatMemberships.RemoveAll(el => el.ChatId == chatId);
+      _chatMemberships.RemoveAll(el => el.ChatId == chatData.Id);
+      _chats.Remove(chatData);
     }
 
     public IEnumerable<Chat> GetAll()

@@ -9,7 +9,7 @@ namespace PloomesCsharpChallenge.Repositories
     IEnumerable<ChatMembership> GetMemberships(int chatId);
     ChatMembership? GetSingleMembership(ChatMembership memberData);
     Chat Create(Chat chatData);
-    void Delete(int chatId);
+    void Delete(Chat chatData);
     void AddUser(ChatMembership memberData);
     void RemoveUser(ChatMembership memberData);
     void SetAdmin(ChatMembership memberData);
