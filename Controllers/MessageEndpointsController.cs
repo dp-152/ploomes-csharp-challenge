@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 using PloomesCsharpChallenge.Dto;
@@ -122,9 +123,45 @@ namespace PloomesCsharpChallenge.Controllers
 
     // PATCH /api/net3/message/{id}
     [HttpPatch("/api/net3/message/{id}")]
-    public ActionResult Edit(int id, [FromBody] MessageCreateDto patchDocument)
+    public ActionResult Edit(int id, [FromBody] JsonPatchDocument<MessageCreateDto> patchDocument)
     {
-      throw new NotImplementedException();
+      ValidateToken(out User? user);
+      if (user is null)
+      {
+        return Unauthorized(new { error = "Must provide a valid user token to edit messages" });
+      }
+
+      var message = _messageRepository.GetById(id);
+      if (message is null)
+      {
+        return NotFound(new { error = "Message not found" });
+      }
+
+      var chat = _chatRepository.GetById(message.ChatId);
+      if (chat is null)
+      {
+        return NotFound(new { error = "Chat not found" });
+      }
+
+      if (message.SenderId != user.Id)
+      {
+        return Unauthorized(new { error = "User is not the sender of this message" });
+      }
+
+      var messageToPatch = _mapper.Map<MessageCreateDto>(message);
+      patchDocument.ApplyTo(messageToPatch, ModelState);
+
+      if (!TryValidateModel(messageToPatch))
+      {
+        return ValidationProblem(ModelState);
+      }
+
+      _mapper.Map(messageToPatch, message);
+      message.LastChanged = DateTime.Now;
+
+      _messageRepository.Update(message);
+
+      return NoContent();
     }
 
     // DELETE /api/net3/message/{id}
