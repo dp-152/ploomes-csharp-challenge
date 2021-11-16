@@ -6,8 +6,7 @@ namespace PloomesCsharpChallenge.Repositories
   {
     IEnumerable<Message> GetMessages(int chatId);
     IEnumerable<Chat> GetAll();
-    Chat CreatePrivate(Chat chatData);
-    Chat CreateGroup(Chat chatData);
+    Chat Create(Chat chatData);
     void Delete(int chatId);
     void AddUser(ChatMembership memberData);
     void RemoveUser(ChatMembership memberData);
