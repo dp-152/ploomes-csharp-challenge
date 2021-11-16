@@ -25,7 +25,7 @@ namespace PloomesCsharpChallenge.Controllers
     }
 
     // GET /api/net3/user/{id}
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = "GetById")]
     public ActionResult<UserReadDto> GetById(int id)
     {
       var user = _repository.GetById(id);
@@ -55,7 +55,10 @@ namespace PloomesCsharpChallenge.Controllers
 
       var user = _mapper.Map<User>(userData);
       user.AuthToken = GenRandomToken();
-      return Ok(_mapper.Map<UserMeDto>(_repository.Register(user)));
+      return CreatedAtRoute(
+        nameof(GetById),
+        new { user.Id },
+        _mapper.Map<UserMeDto>(_repository.Register(user)));
     }
 
     internal string GenRandomToken()
