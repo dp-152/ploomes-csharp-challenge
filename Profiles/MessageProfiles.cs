@@ -13,6 +13,10 @@ namespace PloomesCsharpChallenge.Profiles
 
       // Create, Update (client -> internal)
       CreateMap<MessageCreateDto, Message>();
+
+      // Update [patch] (internal -> client)
+      // (remap required for applying patch document)
+      CreateMap<Message, MessageCreateDto>();
     }
   }
 }
