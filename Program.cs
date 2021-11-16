@@ -1,4 +1,6 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using PloomesCsharpChallenge.Repositories;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
@@ -7,6 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddSingleton<IUserRepository, MockUserRepository>();
+builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
+builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
 
 var app = builder.Build();
 
