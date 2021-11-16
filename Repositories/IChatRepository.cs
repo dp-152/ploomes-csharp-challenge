@@ -5,6 +5,7 @@ namespace PloomesCsharpChallenge.Repositories
   public interface IChatRepository
   {
     IEnumerable<Chat> GetAll();
+    IEnumerable<ChatMembership> GetMemberships(int chatId);
     Chat Create(Chat chatData);
     void Delete(int chatId);
     void AddUser(ChatMembership memberData);
