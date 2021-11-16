@@ -29,13 +29,18 @@ namespace PloomesCsharpChallenge.Repositories
       new ChatMembership { Id = 12, ChatId = 3, UserId = 5, IsAdmin = false },
     };
 
+    private int _nextChatId = 4;
+    private int _nextMembershipId = 13;
+
     public void AddUser(ChatMembership memberData)
     {
+      memberData.Id = _nextMembershipId++;
       _chatMemberships.Add(memberData);
     }
 
     public Chat Create(Chat chatData)
     {
+      chatData.Id = _nextChatId++;
       _chats.Add(chatData);
       return chatData;
     }

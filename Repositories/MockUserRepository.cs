@@ -14,6 +14,8 @@ namespace PloomesCsharpChallenge.Repositories
       new User { Id = 5, FirstName = "Charles", LastName = "Brandenburg", Username = "nessittere", AuthToken = "362b76c708d25364b7fe6bc3192e75060e3b03d7db0f7c28ad1758f810dc8f00" },
     };
 
+    private int _nextId = 6;
+
     public User? GetById(int id)
     {
       return _users.FirstOrDefault(el => el.Id == id);
@@ -31,6 +33,7 @@ namespace PloomesCsharpChallenge.Repositories
 
     public User Register(User userData)
     {
+      userData.Id = _nextId++;
       _users.Add(userData);
       return userData;
     }
