@@ -1,5 +1,5 @@
 ﻿namespace PloomesCsharpChallenge.Dto
 {
-  class UserCreateDto : UserBaseDto
+  public class UserCreateDto : UserBaseDto
   { }
 }

@@ -1,5 +1,5 @@
 ﻿namespace PloomesCsharpChallenge.Dto
 {
-  class MessageCreateDto : MessageBaseDto
+  public class MessageCreateDto : MessageBaseDto
   { }
 }
