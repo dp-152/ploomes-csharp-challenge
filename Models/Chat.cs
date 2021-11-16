@@ -2,7 +2,7 @@
 
 namespace PloomesCsharpChallenge.Models
 {
-  class Chat
+  public class Chat
   {
     [Key]
     public int Id { get; set; }
