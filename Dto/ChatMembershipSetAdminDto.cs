@@ -2,7 +2,7 @@
 
 namespace PloomesCsharpChallenge.Dto
 {
-  class ChatMembershipSetAdminDto
+  public class ChatMembershipSetAdminDto
   {
     [Required]
     public bool IsAdmin { get; set; }

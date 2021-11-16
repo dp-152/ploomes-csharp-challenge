@@ -2,7 +2,7 @@
 
 namespace PloomesCsharpChallenge.Dto
 {
-  class ChatReadDto
+  public class ChatReadDto
   {
     public int Id { get; set; }
     public string? Title { get; set; }

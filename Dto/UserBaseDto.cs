@@ -2,7 +2,7 @@
 
 namespace PloomesCsharpChallenge.Dto
 {
-  class UserBaseDto
+  public class UserBaseDto
   {
     [Required]
     [MaxLength(30)]
