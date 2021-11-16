@@ -43,7 +43,7 @@ namespace PloomesCsharpChallenge.Controllers
 
     // POST /api/net3/user
     [HttpPost]
-    public ActionResult<UserReadDto> Register(UserCreateDto userData)
+    public ActionResult<UserReadDto> Register([FromBody] UserCreateDto userData)
     {
       var existingUser = _repository.GetByName(userData.Username);
 
