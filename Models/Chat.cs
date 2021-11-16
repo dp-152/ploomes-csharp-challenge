@@ -9,10 +9,10 @@ namespace PloomesCsharpChallenge.Models
 
     [Required]
     [MaxLength(50)]
-    public string? Title { get; set; }
+    public string Title { get; set; }
 
     [Required]
     [MaxLength(7)]
-    public string? Type { get; set; }
+    public string Type { get; set; }
   }
 }

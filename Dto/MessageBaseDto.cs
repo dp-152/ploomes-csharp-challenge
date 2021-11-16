@@ -8,6 +8,6 @@ namespace PloomesCsharpChallenge.Dto
     public int ChatId { get; set; }
 
     [Required]
-    public string? MessageBody { get; set; }
+    public string MessageBody { get; set; }
   }
 }

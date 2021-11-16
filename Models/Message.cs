@@ -14,7 +14,7 @@ namespace PloomesCsharpChallenge.Models
     public int SenderId { get; set; }
 
     [Required]
-    public string? MessageBody { get; set; }
+    public string MessageBody { get; set; }
 
     [Required]
     public DateTime Created { get; set; }
