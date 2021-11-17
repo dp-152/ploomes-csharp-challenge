@@ -52,7 +52,9 @@ namespace PloomesCsharpChallenge.Controllers
 
       var message = _mapper.Map<Message>(msgData);
       message.SenderId = user.Id;
+      message.Sender = user;
       message.ChatId = chatId;
+      message.Chat = chat;
       message.Created = DateTime.Now;
       message.LastChanged = DateTime.Now;
 
