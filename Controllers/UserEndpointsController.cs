@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using AutoMapper;
 
@@ -54,6 +55,12 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       var user = _mapper.Map<User>(userData);
+      if (Regex.Match(user.Username, @"^.*[\ \?\&\^\$\#\@\!\(\)\+\-\,\:\;\<\>\’\\\'\-_\*]+.*$").Success)
+      {
+        ModelState.AddModelError("Username", "Username contains invalid characters");
+        return ValidationProblem(new ValidationProblemDetails(ModelState));
+      }
+
       user.AuthToken = GenRandomToken();
       var returnedUser = _repository.Register(user);
 
