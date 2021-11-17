@@ -95,8 +95,8 @@ namespace PloomesCsharpChallenge.Controllers
       var chat = new Chat { Title = $"{user.Username} x {secondParty.Username}", Type = "private" };
       var createdChat = _chatRepository.Create(chat);
 
-      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = user.Id, IsAdmin = false });
-      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = secondParty.Id, IsAdmin = false });
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = false });
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = secondParty.Id, User = secondParty, IsAdmin = false });
       if (!_chatRepository.SaveChanges())
       {
         return StatusCode(500, new { error = "A problem happened while handling your request." });
@@ -229,7 +229,7 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to add does not exist" });
       }
 
-      var newMembership = new ChatMembership { ChatId = chat.Id, UserId = userToAdd.Id, IsAdmin = false };
+      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = false };
       var existingMembership = _chatRepository.GetSingleMembership(newMembership);
       if (existingMembership is not null)
       {
@@ -326,7 +326,7 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to modify does not exist" });
       }
 
-      var newMembership = new ChatMembership { ChatId = chat.Id, UserId = userToAdd.Id, IsAdmin = adminMembership.IsAdmin };
+      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = adminMembership.IsAdmin };
       var existingMembership = _chatRepository.GetSingleMembership(newMembership);
       if (existingMembership is null)
       {
