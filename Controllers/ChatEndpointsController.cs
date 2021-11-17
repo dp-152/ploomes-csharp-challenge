@@ -244,13 +244,13 @@ namespace PloomesCsharpChallenge.Controllers
         return Unauthorized(new { error = "User is not an admin of this chat" });
       }
 
-      var userToAdd = _userRepository.GetById(userId);
-      if (userToAdd is null)
+      var userToRemove = _userRepository.GetById(userId);
+      if (userToRemove is null)
       {
         return NotFound(new { error = "The user you tried to remove does not exist" });
       }
 
-      var existingMembership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = userToAdd.Id });
+      var existingMembership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = userToRemove.Id });
       if (existingMembership is null)
       {
         return NotFound(new { error = "The user you tried to remove is not a member of this chat" });
