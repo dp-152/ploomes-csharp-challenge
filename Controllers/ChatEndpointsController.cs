@@ -119,6 +119,7 @@ namespace PloomesCsharpChallenge.Controllers
       chat.Type = "group";
 
       var createdChat = _chatRepository.Create(chat);
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = true });
       if (!_chatRepository.SaveChanges())
       {
         return StatusCode(500, new { error = "A problem happened while handling your request." });
