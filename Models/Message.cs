@@ -18,7 +18,7 @@ namespace PloomesCsharpChallenge.Models
     [ForeignKey("User")]
     public int SenderId { get; set; }
 
-    public User User { get; set; }
+    public User Sender { get; set; }
 
     [Required]
     public string MessageBody { get; set; }
