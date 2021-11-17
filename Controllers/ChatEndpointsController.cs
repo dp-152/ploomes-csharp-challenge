@@ -303,7 +303,12 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to modify does not exist" });
       }
 
-      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = adminMembership.IsAdmin };
+      if (adminMembership is null || adminMembership.IsAdmin is null)
+      {
+        return BadRequest(new { error = "Must provide a valid admin status" });
+      }
+
+      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = (bool)adminMembership.IsAdmin };
       var existingMembership = _chatRepository.GetSingleMembership(newMembership);
       if (existingMembership is null)
       {
