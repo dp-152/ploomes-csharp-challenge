@@ -56,6 +56,12 @@ namespace PloomesCsharpChallenge.Controllers
       var user = _mapper.Map<User>(userData);
       user.AuthToken = GenRandomToken();
       var returnedUser = _repository.Register(user);
+
+      if (!_repository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return CreatedAtRoute(
         nameof(GetById),
         new { returnedUser.Id },

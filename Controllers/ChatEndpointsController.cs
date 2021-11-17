@@ -68,6 +68,10 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.Delete(chat);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
@@ -93,6 +97,10 @@ namespace PloomesCsharpChallenge.Controllers
 
       _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = user.Id, IsAdmin = false });
       _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = secondParty.Id, IsAdmin = false });
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return CreatedAtAction(nameof(GetChat), new { chatId = createdChat.Id }, _mapper.Map<ChatReadDto>(createdChat));
     }
@@ -111,6 +119,11 @@ namespace PloomesCsharpChallenge.Controllers
       chat.Type = "group";
 
       var createdChat = _chatRepository.Create(chat);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return CreatedAtRoute(nameof(GetChat), new { chatId = createdChat.Id }, createdChat);
     }
 
@@ -224,6 +237,10 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.AddUser(newMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
@@ -268,6 +285,10 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.RemoveUser(existingMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
@@ -313,6 +334,10 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.SetAdmin(newMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }

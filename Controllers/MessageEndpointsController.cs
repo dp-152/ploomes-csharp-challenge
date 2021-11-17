@@ -57,6 +57,10 @@ namespace PloomesCsharpChallenge.Controllers
       message.LastChanged = DateTime.Now;
 
       var returnedMessage = _messageRepository.Create(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return CreatedAtRoute(
         nameof(GetById),
@@ -160,6 +164,10 @@ namespace PloomesCsharpChallenge.Controllers
       message.LastChanged = DateTime.Now;
 
       _messageRepository.Update(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
@@ -193,6 +201,11 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _messageRepository.Delete(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return NoContent();
     }
 
