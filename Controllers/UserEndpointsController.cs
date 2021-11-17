@@ -12,7 +12,7 @@ using PloomesCsharpChallenge.Repositories;
 namespace PloomesCsharpChallenge.Controllers
 {
   [ApiController]
-  [Route("/api/net3/user")]
+  [Route("api/user")]
   public class UserEndpointsController : ControllerBase
   {
     private readonly IUserRepository _repository;
@@ -24,7 +24,7 @@ namespace PloomesCsharpChallenge.Controllers
       _mapper = mapper;
     }
 
-    // GET /api/net3/user/{id}
+    // GET /api/user/{id}
     [HttpGet("{id}", Name = "GetById")]
     public ActionResult<UserReadDto> GetById(int id)
     {
@@ -33,7 +33,7 @@ namespace PloomesCsharpChallenge.Controllers
       return user is null ? NotFound() : (ActionResult<UserReadDto>)Ok(_mapper.Map<UserReadDto>(user));
     }
 
-    // GET /api/net3/user/{username}
+    // GET /api/user/usename/{username}
     [HttpGet("username/{username}")]
     public ActionResult<UserReadDto> GetByUsername(string username)
     {
@@ -41,7 +41,7 @@ namespace PloomesCsharpChallenge.Controllers
       return user is null ? NotFound() : (ActionResult<UserReadDto>)Ok(_mapper.Map<UserReadDto>(user));
     }
 
-    // POST /api/net3/user
+    // POST /api/user
     [HttpPost]
     public ActionResult<UserReadDto> Register([FromBody] UserCreateDto userData)
     {
@@ -56,6 +56,12 @@ namespace PloomesCsharpChallenge.Controllers
       var user = _mapper.Map<User>(userData);
       user.AuthToken = GenRandomToken();
       var returnedUser = _repository.Register(user);
+
+      if (!_repository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return CreatedAtRoute(
         nameof(GetById),
         new { returnedUser.Id },

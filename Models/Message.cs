@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PloomesCsharpChallenge.Models
 {
@@ -8,10 +9,16 @@ namespace PloomesCsharpChallenge.Models
     public int Id { get; set; }
 
     [Required]
+    [ForeignKey("Chat")]
     public int ChatId { get; set; }
 
+    public Chat Chat { get; set; }
+
     [Required]
+    [ForeignKey("User")]
     public int SenderId { get; set; }
+
+    public User Sender { get; set; }
 
     [Required]
     public string MessageBody { get; set; }

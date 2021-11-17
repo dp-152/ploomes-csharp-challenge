@@ -8,6 +8,8 @@ using PloomesCsharpChallenge.Repositories;
 
 namespace PloomesCsharpChallenge.Controllers
 {
+  [ApiController]
+  [Route("api/chat")]
   public class ChatEndpointsController : ControllerBase
   {
     private readonly IUserRepository _userRepository;
@@ -24,15 +26,15 @@ namespace PloomesCsharpChallenge.Controllers
       _mapper = mapper;
     }
 
-    // GET /api/net3/chat
-    [HttpGet("api/net3/chat")]
+    // GET /api/chat
+    [HttpGet]
     public ActionResult<IEnumerable<ChatReadDto>> GetAllChats()
     {
       return Ok(_mapper.Map<IEnumerable<ChatReadDto>>(_chatRepository.GetAll()));
     }
 
-    // GET /api/net3/chat/{chatId}
-    [HttpGet("/api/net3/chat/{chatId}", Name = "GetChat")]
+    // GET /api/chat/{chatId}
+    [HttpGet("{chatId}", Name = "GetChat")]
     public ActionResult<ChatReadDto> GetChat(int chatId)
     {
       var chat = _chatRepository.GetById(chatId);
@@ -40,8 +42,8 @@ namespace PloomesCsharpChallenge.Controllers
       return chat == null ? NotFound() : (ActionResult<ChatReadDto>)Ok(_mapper.Map<ChatReadDto>(chat));
     }
 
-    // DELETE /api/net3/chat/{chatId}
-    [HttpDelete("/api/net3/chat/{chatId}")]
+    // DELETE /api/chat/{chatId}
+    [HttpDelete("{chatId}")]
     public ActionResult<ChatReadDto> DeleteChat(int chatId)
     {
       ValidateToken(out User? user);
@@ -68,12 +70,16 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.Delete(chat);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
 
-    // POST /api/net3/chat/private
-    [HttpPost("/api/net3/chat/private")]
+    // POST /api/chat/private
+    [HttpPost("private")]
     public ActionResult<ChatReadDto> CreatePrivateChat([FromBody] ChatCreatePrivateDto chatData)
     {
       ValidateToken(out User? user);
@@ -91,14 +97,18 @@ namespace PloomesCsharpChallenge.Controllers
       var chat = new Chat { Title = $"{user.Username} x {secondParty.Username}", Type = "private" };
       var createdChat = _chatRepository.Create(chat);
 
-      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = user.Id, IsAdmin = false });
-      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, UserId = secondParty.Id, IsAdmin = false });
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = false });
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = secondParty.Id, User = secondParty, IsAdmin = false });
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return CreatedAtAction(nameof(GetChat), new { chatId = createdChat.Id }, _mapper.Map<ChatReadDto>(createdChat));
     }
 
-    // POST /api/net3/chat/group
-    [HttpPost("/api/net3/chat/group")]
+    // POST /api/chat/group
+    [HttpPost("group")]
     public ActionResult<ChatReadDto> CreateGroupChat([FromBody] ChatCreateGroupDto chatData)
     {
       ValidateToken(out User? user);
@@ -111,11 +121,17 @@ namespace PloomesCsharpChallenge.Controllers
       chat.Type = "group";
 
       var createdChat = _chatRepository.Create(chat);
+      _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = true });
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return CreatedAtRoute(nameof(GetChat), new { chatId = createdChat.Id }, createdChat);
     }
 
-    // GET /api/net3/chat/{chatId}/members
-    [HttpGet("/api/net3/chat/{chatId}/members")]
+    // GET /api/chat/{chatId}/members
+    [HttpGet("{chatId}/members")]
     public ActionResult<IEnumerable<ChatMembershipReadDto>> GetChatMembers(int chatId)
     {
       ValidateToken(out User? user);
@@ -139,8 +155,8 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByChat(chatId)));
     }
 
-    // GET /api/net3/chat/mine
-    [HttpGet("/api/net3/chat/mine")]
+    // GET /api/chat/mine
+    [HttpGet("mine")]
     public ActionResult<IEnumerable<ChatReadDto>> GetMyChats()
     {
       ValidateToken(out User? user);
@@ -152,8 +168,8 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByUser(user.Id)));
     }
 
-    // GET /api/net3/chat/{chatId}/members/{userId}
-    [HttpGet("/api/net3/chat/{chatId}/members/{userId}")]
+    // GET /api/chat/{chatId}/members/{userId}
+    [HttpGet("{chatId}/members/{userId}")]
     public ActionResult<ChatMembershipReadDto> GetUserMembership(int chatId, int userId)
     {
       ValidateToken(out User? user);
@@ -183,8 +199,8 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<ChatMembershipReadDto>(userMembership));
     }
 
-    // POST /api/net3/chat/{chatId}/members/{userId}
-    [HttpPost("/api/net3/chat/{chatId}/members/{userId}")]
+    // POST /api/chat/{chatId}/members/{userId}
+    [HttpPost("{chatId}/members/{userId}")]
     public ActionResult<ChatReadDto> AddUserToChat(int chatId, int userId)
     {
       ValidateToken(out User? user);
@@ -216,7 +232,7 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to add does not exist" });
       }
 
-      var newMembership = new ChatMembership { ChatId = chat.Id, UserId = userToAdd.Id, IsAdmin = false };
+      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = false };
       var existingMembership = _chatRepository.GetSingleMembership(newMembership);
       if (existingMembership is not null)
       {
@@ -224,12 +240,16 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.AddUser(newMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
 
-    // DELETE /api/net3/chat/{chatId}/members/{userId}
-    [HttpDelete("/api/net3/chat/{chatId}/members/{userId}")]
+    // DELETE /api/chat/{chatId}/members/{userId}
+    [HttpDelete("{chatId}/members/{userId}")]
     public ActionResult<ChatReadDto> RemoveUserFromChat(int chatId, int userId)
     {
       ValidateToken(out User? user);
@@ -268,12 +288,16 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.RemoveUser(existingMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
 
-    // POST /api/net3/chat/{chatId}/members/{userId}/admin
-    [HttpPost("/api/net3/chat/{chatId}/members/{userId}/admin")]
+    // POST /api/chat/{chatId}/members/{userId}/admin
+    [HttpPost("{chatId}/members/{userId}/admin")]
     public ActionResult<ChatReadDto> SetUserAdmin(int chatId, int userId, [FromBody] ChatMembershipSetAdminDto adminMembership)
     {
       ValidateToken(out User? user);
@@ -305,7 +329,7 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to modify does not exist" });
       }
 
-      var newMembership = new ChatMembership { ChatId = chat.Id, UserId = userToAdd.Id, IsAdmin = adminMembership.IsAdmin };
+      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = adminMembership.IsAdmin };
       var existingMembership = _chatRepository.GetSingleMembership(newMembership);
       if (existingMembership is null)
       {
@@ -313,6 +337,10 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _chatRepository.SetAdmin(newMembership);
+      if (!_chatRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }

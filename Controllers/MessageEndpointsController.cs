@@ -9,6 +9,8 @@ using PloomesCsharpChallenge.Repositories;
 
 namespace PloomesCsharpChallenge.Controllers
 {
+  [ApiController]
+  [Route("api/message")]
   public class MessageEndpointsController : ControllerBase
   {
     private readonly IMessageRepository _messageRepository;
@@ -28,8 +30,8 @@ namespace PloomesCsharpChallenge.Controllers
       _mapper = mapper;
     }
 
-    // POST /api/net3/message/send/{chatId}
-    [HttpPost("/api/net3/message/send/{chatId}")]
+    // POST /api/message/send/{chatId}
+    [HttpPost("send/{chatId}")]
     public ActionResult<MessageReadDto> Send(int chatId, [FromBody] MessageCreateDto msgData)
     {
       ValidateToken(out User? user);
@@ -52,11 +54,17 @@ namespace PloomesCsharpChallenge.Controllers
 
       var message = _mapper.Map<Message>(msgData);
       message.SenderId = user.Id;
+      message.Sender = user;
       message.ChatId = chatId;
+      message.Chat = chat;
       message.Created = DateTime.Now;
       message.LastChanged = DateTime.Now;
 
       var returnedMessage = _messageRepository.Create(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return CreatedAtRoute(
         nameof(GetById),
@@ -64,8 +72,8 @@ namespace PloomesCsharpChallenge.Controllers
         _mapper.Map<MessageReadDto>(returnedMessage));
     }
 
-    // GET /api/net3/message/{id}
-    [HttpGet("/api/net3/message/{id}")]
+    // GET /api/message/{id}
+    [HttpGet("{id}")]
     public ActionResult<MessageReadDto> GetById(int id)
     {
       ValidateToken(out User? user);
@@ -95,8 +103,8 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<MessageReadDto>(message));
     }
 
-    // GET /api/net3/message/chat/{chatId}
-    [HttpGet("/api/net3/message/chat/{chatId}")]
+    // GET /api/message/chat/{chatId}
+    [HttpGet("chat/{chatId}")]
     public ActionResult<IEnumerable<MessageReadDto>> GetByChatId(int chatId)
     {
       ValidateToken(out User? user);
@@ -121,8 +129,8 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<IEnumerable<MessageReadDto>>(messages));
     }
 
-    // PATCH /api/net3/message/{id}
-    [HttpPatch("/api/net3/message/{id}")]
+    // PATCH /api/message/{id}
+    [HttpPatch("{id}")]
     public ActionResult Edit(int id, [FromBody] JsonPatchDocument<MessageCreateDto> patchDocument)
     {
       ValidateToken(out User? user);
@@ -160,12 +168,16 @@ namespace PloomesCsharpChallenge.Controllers
       message.LastChanged = DateTime.Now;
 
       _messageRepository.Update(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
 
       return NoContent();
     }
 
-    // DELETE /api/net3/message/{id}
-    [HttpDelete("/api/net3/message/{id}")]
+    // DELETE /api/message/{id}
+    [HttpDelete("{id}")]
     public ActionResult Delete(int id)
     {
       ValidateToken(out User? user);
@@ -193,6 +205,11 @@ namespace PloomesCsharpChallenge.Controllers
       }
 
       _messageRepository.Delete(message);
+      if (!_messageRepository.SaveChanges())
+      {
+        return StatusCode(500, new { error = "A problem happened while handling your request." });
+      }
+
       return NoContent();
     }
 

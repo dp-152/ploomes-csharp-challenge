@@ -1,5 +1,8 @@
-﻿using Newtonsoft.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
 
+using Newtonsoft.Json.Serialization;
+
+using PloomesCsharpChallenge.Contexts;
 using PloomesCsharpChallenge.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,9 +16,15 @@ builder.Services.AddControllers().AddNewtonsoftJson(s =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddSingleton<IUserRepository, MockUserRepository>();
-builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
-builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
+
+builder.Services.AddDbContext<MainContext>(options =>
+    options.UseSqlServer(builder.Configuration["PloomesChallenge:ConnectionString"]));
+builder.Services.AddScoped<IUserRepository, SqlUserRepository>();
+// builder.Services.AddSingleton<IUserRepository, MockUserRepository>();
+builder.Services.AddScoped<IMessageRepository, SqlMessageRepository>();
+// builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
+builder.Services.AddScoped<IChatRepository, SqlChatRepository>();
+// builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
 
 var app = builder.Build();
 
