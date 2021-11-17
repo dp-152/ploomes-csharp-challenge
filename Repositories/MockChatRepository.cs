@@ -61,9 +61,14 @@ namespace PloomesCsharpChallenge.Repositories
       return _chats.FirstOrDefault(el => el.Id == chatId);
     }
 
-    public IEnumerable<ChatMembership> GetMemberships(int chatId)
+    public IEnumerable<ChatMembership> GetMembershipsByChat(int chatId)
     {
-      return new List<ChatMembership>(_chatMemberships);
+      return new List<ChatMembership>(_chatMemberships.Where(el => el.ChatId == chatId));
+    }
+
+    public IEnumerable<ChatMembership> GetMembershipsByUser(int userId)
+    {
+      return new List<ChatMembership>(_chatMemberships.Where(el => el.UserId == userId));
     }
 
     public ChatMembership? GetSingleMembership(ChatMembership memberData)
