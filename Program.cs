@@ -19,6 +19,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddDbContext<MainContext>(options =>
     options.UseSqlServer(builder.Configuration["PloomesChallenge:ConnectionString"]));
+builder.Services.AddSingleton<IUserRepository, SqlUserRepository>();
 // builder.Services.AddSingleton<IUserRepository, MockUserRepository>();
 // builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
 // builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
