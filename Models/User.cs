@@ -9,16 +9,16 @@ namespace PloomesCsharpChallenge.Models
 
     [Required]
     [MaxLength(30)]
-    public string? FirstName { get; set; }
+    public string FirstName { get; set; }
 
     [MaxLength(30)]
     public string? LastName { get; set; }
 
     [Required]
     [MaxLength(30)]
-    public string? Username { get; set; }
+    public string Username { get; set; }
 
     [Required]
-    public string? AuthToken { get; set; }
+    public string AuthToken { get; set; }
   }
 }

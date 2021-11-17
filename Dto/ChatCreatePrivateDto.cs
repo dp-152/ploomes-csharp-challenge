@@ -2,9 +2,9 @@
 
 namespace PloomesCsharpChallenge.Dto
 {
-  public class MessageBaseDto
+  public class ChatCreatePrivateDto
   {
     [Required]
-    public string MessageBody { get; set; }
+    public int SecondPartyId { get; set; }
   }
 }

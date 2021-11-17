@@ -12,7 +12,7 @@ namespace PloomesCsharpChallenge.Profiles
       CreateMap<Chat, ChatReadDto>();
 
       // Create (client -> internal)
-      CreateMap<ChatCreateDto, Chat>();
+      CreateMap<ChatCreateGroupDto, Chat>();
 
       // ## MEMBERSHIP ##
       // Read (internal -> client)

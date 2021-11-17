@@ -28,8 +28,11 @@ namespace PloomesCsharpChallenge.Repositories
       new Message { Id = 19, ChatId = 0, SenderId = 2, MessageBody = "I am, indeed, doing very well! Clarence Park@johnsmith1247 x Lonstrould83" },
     };
 
+    private int _nextId = 19;
+
     public Message Create(Message msgData)
     {
+      msgData.Id = _nextId++;
       _messages.Add(msgData);
       return msgData;
     }

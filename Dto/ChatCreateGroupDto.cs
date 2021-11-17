@@ -2,9 +2,9 @@
 
 namespace PloomesCsharpChallenge.Dto
 {
-  public class ChatCreateDto
+  public class ChatCreateGroupDto
   {
     [Required]
-    public string? Title { get; set; }
+    public string Title { get; set; }
   }
 }

@@ -29,21 +29,26 @@ namespace PloomesCsharpChallenge.Repositories
       new ChatMembership { Id = 12, ChatId = 3, UserId = 5, IsAdmin = false },
     };
 
+    private int _nextChatId = 4;
+    private int _nextMembershipId = 13;
+
     public void AddUser(ChatMembership memberData)
     {
+      memberData.Id = _nextMembershipId++;
       _chatMemberships.Add(memberData);
     }
 
     public Chat Create(Chat chatData)
     {
+      chatData.Id = _nextChatId++;
       _chats.Add(chatData);
       return chatData;
     }
 
-    public void Delete(int chatId)
+    public void Delete(Chat chatData)
     {
-      _chats.RemoveAll(el => el.Id == chatId);
-      _chatMemberships.RemoveAll(el => el.ChatId == chatId);
+      _chatMemberships.RemoveAll(el => el.ChatId == chatData.Id);
+      _chats.Remove(chatData);
     }
 
     public IEnumerable<Chat> GetAll()
@@ -56,9 +61,14 @@ namespace PloomesCsharpChallenge.Repositories
       return _chats.FirstOrDefault(el => el.Id == chatId);
     }
 
-    public IEnumerable<ChatMembership> GetMemberships(int chatId)
+    public IEnumerable<ChatMembership> GetMembershipsByChat(int chatId)
     {
-      return new List<ChatMembership>(_chatMemberships);
+      return new List<ChatMembership>(_chatMemberships.Where(el => el.ChatId == chatId));
+    }
+
+    public IEnumerable<ChatMembership> GetMembershipsByUser(int userId)
+    {
+      return new List<ChatMembership>(_chatMemberships.Where(el => el.UserId == userId));
     }
 
     public ChatMembership? GetSingleMembership(ChatMembership memberData)
