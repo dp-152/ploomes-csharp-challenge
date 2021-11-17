@@ -204,6 +204,16 @@ namespace PloomesCsharpChallenge.Controllers
         return Unauthorized(new { error = "User is not a member of this chat" });
       }
 
+      if (chat.Type == "private" && message.SenderId != user.Id)
+      {
+        return Unauthorized(new { error = "User is not the sender of this message" });
+      }
+
+      if (chat.Type == "group" && !membership.IsAdmin)
+      {
+        return Unauthorized(new { error = "User is not an admin of this chat" });
+      }
+
       _messageRepository.Delete(message);
       if (!_messageRepository.SaveChanges())
       {
