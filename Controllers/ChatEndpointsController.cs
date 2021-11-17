@@ -13,15 +13,18 @@ namespace PloomesCsharpChallenge.Controllers
   public class ChatEndpointsController : ControllerBase
   {
     private readonly IUserRepository _userRepository;
+    private readonly IMessageRepository _messageRepository;
     private readonly IChatRepository _chatRepository;
     private readonly IMapper _mapper;
 
     public ChatEndpointsController(
       IUserRepository userRepository,
+      IMessageRepository messageRepository,
       IChatRepository chatRepository,
       IMapper mapper)
     {
       _userRepository = userRepository;
+      _messageRepository = messageRepository;
       _chatRepository = chatRepository;
       _mapper = mapper;
     }
@@ -69,6 +72,7 @@ namespace PloomesCsharpChallenge.Controllers
         return Unauthorized(new { error = "User is not an admin of this chat" });
       }
 
+      _messageRepository.DeleteAllInChat(chatId);
       _chatRepository.Delete(chat);
       if (!_chatRepository.SaveChanges())
       {
@@ -256,6 +260,7 @@ namespace PloomesCsharpChallenge.Controllers
         return NotFound(new { error = "The user you tried to remove is not a member of this chat" });
       }
 
+      _messageRepository.DeleteAllInChatByUserId(chatId, userId);
       _chatRepository.RemoveUser(existingMembership);
       if (!_chatRepository.SaveChanges())
       {
