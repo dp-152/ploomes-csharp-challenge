@@ -168,37 +168,6 @@ namespace PloomesCsharpChallenge.Controllers
       return Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByUser(user.Id)));
     }
 
-    // GET /api/chat/{chatId}/members/{userId}
-    [HttpGet("{chatId}/members/{userId}")]
-    public ActionResult<ChatMembershipReadDto> GetUserMembership(int chatId, int userId)
-    {
-      ValidateToken(out User? user);
-      if (user is null)
-      {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
-      }
-
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
-      {
-        return NotFound();
-      }
-
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
-      {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
-
-      var userMembership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = userId });
-      if (userMembership is null)
-      {
-        return NotFound(new { error = "The user you provided is not a member of this chat" });
-      }
-
-      return Ok(_mapper.Map<ChatMembershipReadDto>(userMembership));
-    }
-
     // POST /api/chat/{chatId}/members/{userId}
     [HttpPost("{chatId}/members/{userId}")]
     public ActionResult<ChatReadDto> AddUserToChat(int chatId, int userId)
