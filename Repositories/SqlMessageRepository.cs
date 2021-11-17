@@ -23,6 +23,16 @@ namespace PloomesCsharpChallenge.Repositories
       _context.Messages.Remove(msgData);
     }
 
+    public void DeleteAllInChat(int chatId)
+    {
+      _context.Messages.RemoveRange(_context.Messages.Where(m => m.ChatId == chatId));
+    }
+
+    public void DeleteAllInChatByUserId(int chatId, int userId)
+    {
+      _context.Messages.RemoveRange(_context.Messages.Where(m => m.ChatId == chatId && m.SenderId == userId));
+    }
+
     public IEnumerable<Message> GetAllByChatId(int chatId)
     {
       return _context.Messages.Where(el => el.ChatId == chatId);

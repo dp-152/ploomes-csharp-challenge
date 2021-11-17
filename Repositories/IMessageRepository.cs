@@ -10,5 +10,7 @@ namespace PloomesCsharpChallenge.Repositories
     Message Create(Message msgData);
     void Update(Message msgData);
     void Delete(Message msgData);
+    void DeleteAllInChat(int chatId);
+    void DeleteAllInChatByUserId(int chatId, int userId);
   }
 }
