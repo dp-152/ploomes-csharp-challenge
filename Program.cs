@@ -23,6 +23,7 @@ builder.Services.AddSingleton<IUserRepository, SqlUserRepository>();
 // builder.Services.AddSingleton<IUserRepository, MockUserRepository>();
 builder.Services.AddSingleton<IMessageRepository, SqlMessageRepository>();
 // builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
+builder.Services.AddSingleton<IChatRepository, SqlChatRepository>();
 // builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
 
 var app = builder.Build();
