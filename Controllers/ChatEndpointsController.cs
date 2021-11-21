@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using PloomesCsharpChallenge.Dto;
 using PloomesCsharpChallenge.Models;
 using PloomesCsharpChallenge.Repositories;
+using PloomesCsharpChallenge.Util;
 
 namespace PloomesCsharpChallenge.Controllers
 {
@@ -16,17 +17,23 @@ namespace PloomesCsharpChallenge.Controllers
     private readonly IMessageRepository _messageRepository;
     private readonly IChatRepository _chatRepository;
     private readonly IMapper _mapper;
+    private readonly ChatValidator _chatValidator;
+    private readonly UserValidator _userValidator;
 
     public ChatEndpointsController(
       IUserRepository userRepository,
       IMessageRepository messageRepository,
       IChatRepository chatRepository,
-      IMapper mapper)
+      IMapper mapper,
+      ChatValidator chatValidator,
+      UserValidator userValidator)
     {
       _userRepository = userRepository;
       _messageRepository = messageRepository;
       _chatRepository = chatRepository;
       _mapper = mapper;
+      _chatValidator = chatValidator;
+      _userValidator = userValidator;
     }
 
     // GET /api/chat
@@ -49,28 +56,16 @@ namespace PloomesCsharpChallenge.Controllers
     [HttpDelete("{chatId}")]
     public ActionResult<ChatReadDto> DeleteChat(int chatId)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+
+      _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
+
+      if (user is null || chat is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to delete a chat" });
+        return ValidationProblem(ModelState);
       }
 
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
-      {
-        return NotFound();
-      }
-
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
-      {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
-
-      if (!membership.IsAdmin)
-      {
-        return Unauthorized(new { error = "User is not an admin of this chat" });
-      }
+      _chatValidator.ValidateGroupAdmin(user.Id, chatId, ModelState);
 
       _messageRepository.DeleteAllInChat(chatId);
       _chatRepository.Delete(chat);
@@ -86,16 +81,12 @@ namespace PloomesCsharpChallenge.Controllers
     [HttpPost("private")]
     public ActionResult<ChatReadDto> CreatePrivateChat([FromBody] ChatCreatePrivateDto chatData)
     {
-      ValidateToken(out User? user);
-      if (user is null)
-      {
-        return Unauthorized(new { error = "Must provide a valid user token to create a chat" });
-      }
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _userValidator.ValidateUserExists(out User? secondParty, chatData.SecondPartyId, ModelState);
 
-      var secondParty = _userRepository.GetById(chatData.SecondPartyId);
-      if (secondParty is null)
+      if (user is null || secondParty is null || ModelState.ErrorCount > 0)
       {
-        return NotFound(new { error = "Second party user does not exist" });
+        return ValidationProblem(ModelState);
       }
 
       var chat = new Chat { Title = $"{user.Username} x {secondParty.Username}", Type = "private" };
@@ -115,10 +106,11 @@ namespace PloomesCsharpChallenge.Controllers
     [HttpPost("group")]
     public ActionResult<ChatReadDto> CreateGroupChat([FromBody] ChatCreateGroupDto chatData)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+
+      if (user is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to create a chat" });
+        return ValidationProblem(ModelState);
       }
 
       var chat = _mapper.Map<Chat>(chatData);
@@ -138,207 +130,121 @@ namespace PloomesCsharpChallenge.Controllers
     [HttpGet("{chatId}/members")]
     public ActionResult<IEnumerable<ChatMembershipReadDto>> GetChatMembers(int chatId)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+
+      _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
+
+      if (user is null || chat is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
+        return ValidationProblem(ModelState);
       }
 
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
-      {
-        return NotFound();
-      }
+      _chatValidator.ValidateGroupMember(out _, chatId, user.Id, ModelState);
 
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
-      {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
-
-      return Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByChat(chatId)));
+      return ModelState.ErrorCount > 0
+        ? ValidationProblem(ModelState)
+        : (ActionResult<IEnumerable<ChatMembershipReadDto>>)Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByChat(chatId)));
     }
 
     // GET /api/chat/mine
     [HttpGet("mine")]
     public ActionResult<IEnumerable<ChatReadDto>> GetMyChats()
     {
-      ValidateToken(out User? user);
-      if (user is null)
-      {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
-      }
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
 
-      return Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByUser(user.Id)));
+      return user is null || ModelState.ErrorCount > 0
+        ? ValidationProblem(ModelState)
+        : (ActionResult<IEnumerable<ChatReadDto>>)Ok(_mapper.Map<IEnumerable<ChatMembershipReadDto>>(_chatRepository.GetMembershipsByUser(user.Id)));
     }
 
     // POST /api/chat/{chatId}/members/{userId}
     [HttpPost("{chatId}/members/{userId}")]
     public ActionResult<ChatReadDto> AddUserToChat(int chatId, int userId)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
+      if (user is null || chat is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
+        return ValidationProblem(ModelState);
       }
 
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
+      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
+      _userValidator.ValidateUserExists(out User? userToAdd, userId, ModelState);
+      if (ModelState.ErrorCount > 0 || userToAdd is null)
       {
-        return NotFound();
-      }
-
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
-      {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
-
-      if (!membership.IsAdmin)
-      {
-        return Unauthorized(new { error = "User is not an admin of this chat" });
-      }
-
-      var userToAdd = _userRepository.GetById(userId);
-      if (userToAdd is null)
-      {
-        return NotFound(new { error = "The user you tried to add does not exist" });
+        return ValidationProblem(ModelState);
       }
 
       var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = false };
-      var existingMembership = _chatRepository.GetSingleMembership(newMembership);
-      if (existingMembership is not null)
+
+      _chatValidator.ValidateGroupNotMember(chatId, userToAdd.Id, ModelState);
+      if (ModelState.ErrorCount > 0)
       {
-        return BadRequest(new { error = "The user you tried to add is already a member of this chat" });
+        return ValidationProblem(ModelState);
       }
 
       _chatRepository.AddUser(newMembership);
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return NoContent();
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)NoContent();
     }
 
     // DELETE /api/chat/{chatId}/members/{userId}
     [HttpDelete("{chatId}/members/{userId}")]
     public ActionResult<ChatReadDto> RemoveUserFromChat(int chatId, int userId)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
+      if (user is null || chat is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
+        return ValidationProblem(ModelState);
       }
 
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
+      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
+      _userValidator.ValidateUserExists(out User? userToRemove, userId, ModelState);
+      if (ModelState.ErrorCount > 0 || userToRemove is null)
       {
-        return NotFound();
+        return ValidationProblem(ModelState);
       }
 
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
+      _chatValidator.ValidateGroupMember(out ChatMembership? existingMembership, chatId, userToRemove.Id, ModelState);
+      if (ModelState.ErrorCount > 0 || existingMembership is null)
       {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
-
-      if (!membership.IsAdmin)
-      {
-        return Unauthorized(new { error = "User is not an admin of this chat" });
-      }
-
-      var userToRemove = _userRepository.GetById(userId);
-      if (userToRemove is null)
-      {
-        return NotFound(new { error = "The user you tried to remove does not exist" });
-      }
-
-      var existingMembership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = userToRemove.Id });
-      if (existingMembership is null)
-      {
-        return NotFound(new { error = "The user you tried to remove is not a member of this chat" });
+        return ValidationProblem(ModelState);
       }
 
       _messageRepository.DeleteAllInChatByUserId(chatId, userId);
       _chatRepository.RemoveUser(existingMembership);
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return NoContent();
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)NoContent();
     }
 
     // POST /api/chat/{chatId}/members/{userId}/admin
     [HttpPost("{chatId}/members/{userId}/admin")]
     public ActionResult<ChatReadDto> SetUserAdmin(int chatId, int userId, [FromBody] ChatMembershipSetAdminDto adminMembership)
     {
-      ValidateToken(out User? user);
-      if (user is null)
+      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
+      if (user is null || chat is null || ModelState.ErrorCount > 0)
       {
-        return Unauthorized(new { error = "Must provide a valid user token to view chat members" });
+        return ValidationProblem(ModelState);
       }
 
-      var chat = _chatRepository.GetById(chatId);
-      if (chat == null)
+      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
+      _userValidator.ValidateUserExists(out _, userId, ModelState);
+      _chatValidator.ValidateGroupMember(out ChatMembership? membership, chatId, userId, ModelState);
+      if (membership is null || ModelState.ErrorCount > 0)
       {
-        return NotFound();
+        return ValidationProblem(ModelState);
       }
 
-      var membership = _chatRepository.GetSingleMembership(new ChatMembership { ChatId = chat.Id, UserId = user.Id });
-      if (membership is null)
-      {
-        return Unauthorized(new { error = "User is not a member of this chat" });
-      }
+      membership.IsAdmin = adminMembership.IsAdmin;
+      _chatRepository.SetAdmin(membership);
 
-      if (!membership.IsAdmin)
-      {
-        return Unauthorized(new { error = "User is not an admin of this chat" });
-      }
-
-      var userToAdd = _userRepository.GetById(userId);
-      if (userToAdd is null)
-      {
-        return NotFound(new { error = "The user you tried to modify does not exist" });
-      }
-
-      if (adminMembership is null || adminMembership.IsAdmin is null)
-      {
-        return BadRequest(new { error = "Must provide a valid admin status" });
-      }
-
-      var newMembership = new ChatMembership { ChatId = chat.Id, Chat = chat, UserId = userToAdd.Id, User = userToAdd, IsAdmin = (bool)adminMembership.IsAdmin };
-      var existingMembership = _chatRepository.GetSingleMembership(newMembership);
-      if (existingMembership is null)
-      {
-        return BadRequest(new { error = "The user you tried to modify is not a member of this chat" });
-      }
-
-      _chatRepository.SetAdmin(newMembership);
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return NoContent();
-    }
-
-    internal User? GetUser(string token)
-    {
-      return _userRepository.GetByToken(token);
-    }
-
-    internal void ValidateToken(out User? user)
-    {
-      Request.Headers.TryGetValue("Authorization", out var token);
-      if (token.Count < 1 || string.IsNullOrWhiteSpace(token[0]))
-      {
-        user = null;
-        return;
-      }
-
-      user = GetUser(token[0]);
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)NoContent();
     }
   }
 }

@@ -4,6 +4,7 @@ using Newtonsoft.Json.Serialization;
 
 using PloomesCsharpChallenge.Contexts;
 using PloomesCsharpChallenge.Repositories;
+using PloomesCsharpChallenge.Util;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,9 @@ builder.Services.AddScoped<IMessageRepository, SqlMessageRepository>();
 // builder.Services.AddSingleton<IMessageRepository, MockMessageRepository>();
 builder.Services.AddScoped<IChatRepository, SqlChatRepository>();
 // builder.Services.AddSingleton<IChatRepository, MockChatRepository>();
+
+builder.Services.AddScoped<ChatValidator>();
+builder.Services.AddScoped<UserValidator>();
 
 var app = builder.Build();
 
