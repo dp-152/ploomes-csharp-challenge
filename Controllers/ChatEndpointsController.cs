@@ -69,12 +69,9 @@ namespace PloomesCsharpChallenge.Controllers
 
       _messageRepository.DeleteAllInChat(chatId);
       _chatRepository.Delete(chat);
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return NoContent();
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)NoContent();
     }
 
     // POST /api/chat/private
@@ -94,12 +91,9 @@ namespace PloomesCsharpChallenge.Controllers
 
       _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = false });
       _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = secondParty.Id, User = secondParty, IsAdmin = false });
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return CreatedAtAction(nameof(GetChat), new { chatId = createdChat.Id }, _mapper.Map<ChatReadDto>(createdChat));
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)CreatedAtAction(nameof(GetChat), new { chatId = createdChat.Id }, _mapper.Map<ChatReadDto>(createdChat));
     }
 
     // POST /api/chat/group
@@ -118,12 +112,9 @@ namespace PloomesCsharpChallenge.Controllers
 
       var createdChat = _chatRepository.Create(chat);
       _chatRepository.AddUser(new ChatMembership { ChatId = createdChat.Id, Chat = createdChat, UserId = user.Id, User = user, IsAdmin = true });
-      if (!_chatRepository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return CreatedAtRoute(nameof(GetChat), new { chatId = createdChat.Id }, createdChat);
+      return !_chatRepository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<ChatReadDto>)CreatedAtRoute(nameof(GetChat), new { chatId = createdChat.Id }, createdChat);
     }
 
     // GET /api/chat/{chatId}/members
@@ -159,17 +150,17 @@ namespace PloomesCsharpChallenge.Controllers
 
     // POST /api/chat/{chatId}/members/{userId}
     [HttpPost("{chatId}/members/{userId}")]
-    public ActionResult<ChatReadDto> AddUserToChat(int chatId, int userId)
+    public ActionResult<ChatReadDto> AddUserToChat(int chatId, int memberId)
     {
-      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _userValidator.ValidateUserToken(out User? admin, Request.Headers, ModelState);
       _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
-      if (user is null || chat is null || ModelState.ErrorCount > 0)
+      if (admin is null || chat is null || ModelState.ErrorCount > 0)
       {
         return ValidationProblem(ModelState);
       }
 
-      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
-      _userValidator.ValidateUserExists(out User? userToAdd, userId, ModelState);
+      _chatValidator.ValidateGroupAdmin(chatId, admin.Id, ModelState);
+      _userValidator.ValidateUserExists(out User? userToAdd, memberId, ModelState);
       if (ModelState.ErrorCount > 0 || userToAdd is null)
       {
         return ValidationProblem(ModelState);
@@ -191,17 +182,17 @@ namespace PloomesCsharpChallenge.Controllers
 
     // DELETE /api/chat/{chatId}/members/{userId}
     [HttpDelete("{chatId}/members/{userId}")]
-    public ActionResult<ChatReadDto> RemoveUserFromChat(int chatId, int userId)
+    public ActionResult<ChatReadDto> RemoveUserFromChat(int chatId, int memberId)
     {
-      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _userValidator.ValidateUserToken(out User? admin, Request.Headers, ModelState);
       _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
-      if (user is null || chat is null || ModelState.ErrorCount > 0)
+      if (admin is null || chat is null || ModelState.ErrorCount > 0)
       {
         return ValidationProblem(ModelState);
       }
 
-      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
-      _userValidator.ValidateUserExists(out User? userToRemove, userId, ModelState);
+      _chatValidator.ValidateGroupAdmin(chatId, admin.Id, ModelState);
+      _userValidator.ValidateUserExists(out User? userToRemove, memberId, ModelState);
       if (ModelState.ErrorCount > 0 || userToRemove is null)
       {
         return ValidationProblem(ModelState);
@@ -213,7 +204,7 @@ namespace PloomesCsharpChallenge.Controllers
         return ValidationProblem(ModelState);
       }
 
-      _messageRepository.DeleteAllInChatByUserId(chatId, userId);
+      _messageRepository.DeleteAllInChatByUserId(chatId, memberId);
       _chatRepository.RemoveUser(existingMembership);
       return !_chatRepository.SaveChanges()
         ? StatusCode(500, new { error = "A problem happened while handling your request." })
@@ -222,18 +213,18 @@ namespace PloomesCsharpChallenge.Controllers
 
     // POST /api/chat/{chatId}/members/{userId}/admin
     [HttpPost("{chatId}/members/{userId}/admin")]
-    public ActionResult<ChatReadDto> SetUserAdmin(int chatId, int userId, [FromBody] ChatMembershipSetAdminDto adminMembership)
+    public ActionResult<ChatReadDto> SetUserAdmin(int chatId, int memberId, [FromBody] ChatMembershipSetAdminDto adminMembership)
     {
-      _userValidator.ValidateUserToken(out User? user, Request.Headers, ModelState);
+      _userValidator.ValidateUserToken(out User? admin, Request.Headers, ModelState);
       _chatValidator.ValidateChatExists(out Chat? chat, chatId, ModelState);
-      if (user is null || chat is null || ModelState.ErrorCount > 0)
+      if (admin is null || chat is null || ModelState.ErrorCount > 0)
       {
         return ValidationProblem(ModelState);
       }
 
-      _chatValidator.ValidateGroupAdmin(chatId, user.Id, ModelState);
-      _userValidator.ValidateUserExists(out _, userId, ModelState);
-      _chatValidator.ValidateGroupMember(out ChatMembership? membership, chatId, userId, ModelState);
+      _chatValidator.ValidateGroupAdmin(chatId, admin.Id, ModelState);
+      _userValidator.ValidateUserExists(out _, memberId, ModelState);
+      _chatValidator.ValidateGroupMember(out ChatMembership? membership, chatId, memberId, ModelState);
       if (membership is null || ModelState.ErrorCount > 0)
       {
         return ValidationProblem(ModelState);
