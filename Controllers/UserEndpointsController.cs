@@ -1,6 +1,5 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 
 using AutoMapper;
 
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using PloomesCsharpChallenge.Dto;
 using PloomesCsharpChallenge.Models;
 using PloomesCsharpChallenge.Repositories;
+using PloomesCsharpChallenge.Util;
 
 namespace PloomesCsharpChallenge.Controllers
 {
@@ -18,11 +18,13 @@ namespace PloomesCsharpChallenge.Controllers
   {
     private readonly IUserRepository _repository;
     private readonly IMapper _mapper;
+    private readonly UserValidator _userValidator;
 
-    public UserEndpointsController(IUserRepository repository, IMapper mapper)
+    public UserEndpointsController(IUserRepository repository, IMapper mapper, UserValidator userValidator)
     {
       _repository = repository;
       _mapper = mapper;
+      _userValidator = userValidator;
     }
 
     // GET /api/user/{id}
@@ -46,30 +48,19 @@ namespace PloomesCsharpChallenge.Controllers
     [HttpPost]
     public ActionResult<UserReadDto> Register([FromBody] UserCreateDto userData)
     {
-      var existingUser = _repository.GetByName(userData.Username);
-
-      if (existingUser is not null)
+      _userValidator.ValidateUsernameNotInUse(userData.Username, ModelState);
+      _userValidator.ValidateUsernameIsSafe(userData.Username, ModelState);
+      if (ModelState.ErrorCount > 0)
       {
-        ModelState.AddModelError("Username", "Username already in use");
-        return ValidationProblem(new ValidationProblemDetails(ModelState));
+        return ValidationProblem(ModelState);
       }
 
       var user = _mapper.Map<User>(userData);
-      if (Regex.Match(user.Username, @"^.*[\ \?\&\^\$\#\@\!\(\)\+\-\,\:\;\<\>\’\\\'\-_\*]+.*$").Success)
-      {
-        ModelState.AddModelError("Username", "Username contains invalid characters");
-        return ValidationProblem(new ValidationProblemDetails(ModelState));
-      }
-
       user.AuthToken = GenRandomToken();
       var returnedUser = _repository.Register(user);
-
-      if (!_repository.SaveChanges())
-      {
-        return StatusCode(500, new { error = "A problem happened while handling your request." });
-      }
-
-      return CreatedAtRoute(
+      return !_repository.SaveChanges()
+        ? StatusCode(500, new { error = "A problem happened while handling your request." })
+        : (ActionResult<UserReadDto>)CreatedAtRoute(
         nameof(GetById),
         new { returnedUser.Id },
         _mapper.Map<UserMeDto>(user));

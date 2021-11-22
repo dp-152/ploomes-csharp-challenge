@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using System.Text.RegularExpressions;
+
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 using PloomesCsharpChallenge.Models;
 using PloomesCsharpChallenge.Repositories;
@@ -33,6 +35,22 @@ namespace PloomesCsharpChallenge.Util
       if (user is null)
       {
         modelState.AddModelError("User", $"No such user with ID #{userId}");
+      }
+    }
+
+    public void ValidateUsernameNotInUse(string username, ModelStateDictionary modelState)
+    {
+      if (_userRepository.GetByName(username) is not null)
+      {
+        modelState.AddModelError("Username", $"Username \"{username}\" is already in use");
+      }
+    }
+
+    public void ValidateUsernameIsSafe(string username, ModelStateDictionary modelState)
+    {
+      if (Regex.Match(username, @"^.*[\ \?\&\^\$\#\@\!\(\)\+\-\,\:\;\<\>\’\\\'\-_\*]+.*$").Success)
+      {
+        modelState.AddModelError("Username", "Username contains illegal characters");
       }
     }
   }
