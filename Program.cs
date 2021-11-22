@@ -29,6 +29,7 @@ builder.Services.AddScoped<IChatRepository, SqlChatRepository>();
 
 builder.Services.AddScoped<ChatValidator>();
 builder.Services.AddScoped<UserValidator>();
+builder.Services.AddScoped<MessageValidator>();
 
 var app = builder.Build();
 
